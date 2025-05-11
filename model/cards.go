@@ -22,3 +22,7 @@ type CardEntity struct {
 	CardsTable
 	CardSeries		CardSeriesEntity	`json:"card_series" gorm:"foreignKey:CardSeriesID;references:ID"`
 }
+
+func (cc CardEntity) LoadWithAssociations(db *gorm.DB) *gorm.DB {
+	return db.Preload("CardSeries").Preload("CardSeries.CardBrand")
+}

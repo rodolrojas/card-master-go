@@ -11,7 +11,7 @@ func SetupRoutes(app *fiber.App) {
 	api := app.Group("/api")
 
 	cards := api.Group("/cards")
-	CardController := controller.CardController{}
+	CardController := controller.CardControllerProvider()
 	cards.Get("/", CardController.GetCards)
 	cards.Get("/:id", CardController.GetCardByID)
 	cards.Post("/", CardController.CreateCard)
@@ -19,7 +19,7 @@ func SetupRoutes(app *fiber.App) {
 	cards.Delete("/:id", CardController.DeleteCard)
 	
 	series := api.Group("/card_series")
-	CardSeriesController := controller.CardSeriesController{}
+	CardSeriesController := controller.CardSeriesControllerProvider()
 	series.Get("/", CardSeriesController.GetSeries)
 	series.Get("/:id", CardSeriesController.GetSeriesByID)
 	series.Post("/", CardSeriesController.CreateSeries)
@@ -27,7 +27,7 @@ func SetupRoutes(app *fiber.App) {
 	series.Delete("/:id", CardSeriesController.DeleteSeries)
 	
 	brands := api.Group("/card_brands")
-	CardBrandsController := controller.CardBrandsController{}
+	CardBrandsController := controller.CardBrandsControllerProvider()
 	brands.Get("/", CardBrandsController.GetBrands)
 	brands.Get("/:id", CardBrandsController.GetBrandByID)
 	brands.Post("/", CardBrandsController.CreateBrand)

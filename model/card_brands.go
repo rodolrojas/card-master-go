@@ -11,7 +11,15 @@ type CardBrandsTable struct {
 	
 }
 
+func (cc CardBrandsTable) TableName() string {
+	return "card_brands"
+}
+
 type CardBrandEntity struct {
 	CardBrandsTable
 	CardSeries  []CardSeriesEntity `json:"card_series" gorm:"foreignKey:CardBrandsID"`
+}
+
+func (cc CardBrandEntity) LoadWithAssociations(db *gorm.DB) *gorm.DB {
+	return db.Preload("CardSeries").Preload("CardSeries.Cards")
 }

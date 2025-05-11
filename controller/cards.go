@@ -1,20 +1,31 @@
 package controller
 
 import (
-	"card-master/database"
-	request "card-master/lib/middleware/request"
-	models "card-master/model"
 	"fmt"
 
+	"card-master/database"
+	"card-master/lib/middleware/request"
+	models "card-master/model"
+
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
-type CardController struct {}
+type CardController struct {
+	CardsModel *gorm.DB
+}
+
+func CardControllerProvider() *CardController {
+	// Initialize the CardController with the database connection
+	return &CardController{
+		CardsModel: (&models.CardEntity{}).LoadWithAssociations(database.DB),
+	}
+}
 
 func (cc *CardController) GetCards(c *fiber.Ctx) error {
 	// Get all cards from the database
 	var cards []models.CardEntity
-	if err := database.DB.Where(
+	if err := cc.CardsModel.Where(
 		"deleted = false",
 	).Find(&cards).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
@@ -32,7 +43,7 @@ func (cc *CardController) GetCardByID(c *fiber.Ctx) error {
 
 	// Find the card by ID
 	var card models.CardEntity
-	if err := GetCardByID(&card, id); err != nil {
+	if err := cc.__GetCardByID(&card, id); err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "Card not found",
 		})
@@ -67,7 +78,7 @@ func (cc *CardController) UpdateCard(c *fiber.Ctx) error {
 
 	// Find the card by ID
 	var card models.CardEntity
-	if err := GetCardByID(&card, id); err != nil {
+	if err := cc.__GetCardByID(&card, id); err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "Card not found",
 		})
@@ -96,7 +107,7 @@ func (cc *CardController) DeleteCard(c *fiber.Ctx) error {
 
 	// Find the card by ID
 	var card models.CardEntity
-	if err := GetCardByID(&card, id); err != nil {
+	if err := cc.__GetCardByID(&card, id); err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "Card not found",
 		})
@@ -117,9 +128,9 @@ func (cc *CardController) DeleteCard(c *fiber.Ctx) error {
 
 
 
-func GetCardByID(card *models.CardEntity, id string) (error) {
+func (cc *CardController) __GetCardByID(card *models.CardEntity, id string) (error) {
 	// Find the card by ID
-	if err := database.DB.Where(
+	if err := cc.CardsModel.Where(
 		"deleted = false AND id = ?", id,
 	).First(&card).Error; err != nil {
 		return err

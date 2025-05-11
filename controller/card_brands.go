@@ -6,14 +6,24 @@ import (
 	models "card-master/model"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
-type CardBrandsController struct {}
+type CardBrandsController struct {
+	CardBrandsModel *gorm.DB
+}
+
+func CardBrandsControllerProvider() *CardBrandsController {
+	// Initialize the CardBrandsController with the database connection
+	return &CardBrandsController{
+		CardBrandsModel: (&models.CardBrandEntity{}).LoadWithAssociations(database.DB),
+	}
+}
 
 func (cc *CardBrandsController) GetBrands(c *fiber.Ctx) error {
 	// Get all card brands from the database
 	var brands []models.CardBrandEntity
-	if err := database.DB.Where(
+	if err := cc.CardBrandsModel.Where(
 		"deleted = false",
 	).Find(&brands).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
@@ -31,7 +41,7 @@ func (cc *CardBrandsController) GetBrandByID(c *fiber.Ctx) error {
 
 	// Find the card by ID
 	var brand models.CardBrandEntity
-	if err := GetBrandsByID(&brand, id); err != nil {
+	if err := cc.__GetBrandByID(&brand, id); err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "Card brand not found",
 		})
@@ -49,7 +59,7 @@ func (cc *CardBrandsController) CreateBrand(c *fiber.Ctx) error {
 	}
 
 	// Save the card to the database
-	if err := database.DB.Create(&brand).Error; err != nil {
+	if err := cc.CardBrandsModel.Create(&brand).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"error": "Failed to create brand",
 		})
@@ -65,7 +75,7 @@ func (cc *CardBrandsController) UpdateBrand(c *fiber.Ctx) error {
 
 	// Find the card brands by ID
 	var brand models.CardBrandEntity
-	if err := GetBrandsByID(&brand, id); err != nil {
+	if err := cc.__GetBrandByID(&brand, id); err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "Card brand not found",
 		})
@@ -77,7 +87,7 @@ func (cc *CardBrandsController) UpdateBrand(c *fiber.Ctx) error {
 	}
 
 	// Update the brands in the database
-	if err := database.DB.Save(&brand).Error; err != nil {
+	if err := cc.CardBrandsModel.Save(&brand).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"error": "Failed to update brand",
 		})
@@ -93,15 +103,15 @@ func (cc *CardBrandsController) DeleteBrand(c *fiber.Ctx) error {
 
 	// Find the card brands by ID
 	var brand models.CardBrandEntity
-	if err := GetBrandsByID(&brand, id); err != nil {
+	if err := cc.__GetBrandByID(&brand, id); err != nil {
 		return c.Status(404).JSON(fiber.Map{
-			"error": "Card not found",
+			"error": "Brand not found",
 		})
 	}
 	// Delete the card brands from the database
 	brand.Deleted = true
 	// Set the Deleted field to true instead of deleting the record
-	if err := database.DB.Save(&brand).Error; err != nil {
+	if err := cc.CardBrandsModel.Save(&brand).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"error": "Failed to delete brand",
 		})
@@ -112,9 +122,9 @@ func (cc *CardBrandsController) DeleteBrand(c *fiber.Ctx) error {
 	})
 }
 
-func GetBrandsByID(brands *models.CardBrandEntity, id string) (error) {
+func (cc *CardBrandsController) __GetBrandByID(brands *models.CardBrandEntity, id string) (error) {
 	// Find the card brands by ID
-	if err := database.DB.Where(
+	if err := cc.CardBrandsModel.Where(
 		"deleted = false AND id = ?", id,
 	).First(&brands).Error; err != nil {
 		return err

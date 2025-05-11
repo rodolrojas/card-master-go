@@ -19,6 +19,10 @@ func (cc CardSeriesTable) TableName() string {
 
 type CardSeriesEntity struct {
 	CardSeriesTable
-	CardBrand		CardBrandEntity 	`json:"card_brands" gorm:"foreignKey:CardBrandsID"`
-	Card			[]CardEntity 		`json:"card" gorm:"foreignKey:CardSeriesID"`
+	CardBrand		CardBrandsTable 	`json:"card_brands" gorm:"foreignKey:CardBrandsID;references:ID"`
+	Card			[]CardsTable 		`json:"card" gorm:"foreignKey:CardSeriesID;references:ID"`
+}	
+
+func (cc CardSeriesEntity) LoadWithAssociations(db *gorm.DB) *gorm.DB {
+	return db.Preload("CardBrand").Preload("Card")
 }

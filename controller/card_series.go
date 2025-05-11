@@ -6,14 +6,24 @@ import (
 	models "card-master/model"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
-type CardSeriesController struct {}
+type CardSeriesController struct {
+	CardSeriesModel *gorm.DB
+}
+
+func CardSeriesControllerProvider() *CardSeriesController {
+	// Initialize the CardSeriesController with the database connection
+	return &CardSeriesController{
+		CardSeriesModel: (&models.CardSeriesEntity{}).LoadWithAssociations(database.DB),
+	}
+}
 
 func (cc *CardSeriesController) GetSeries(c *fiber.Ctx) error {
 	// Get all card series from the database
 	var series []models.CardSeriesEntity
-	if err := database.DB.Where(
+	if err := cc.CardSeriesModel.Where(
 		"deleted = false",
 	).Find(&series).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
@@ -31,7 +41,7 @@ func (cc *CardSeriesController) GetSeriesByID(c *fiber.Ctx) error {
 
 	// Find the card by ID
 	var series models.CardSeriesEntity
-	if err := GetSeriesByID(&series, id); err != nil {
+	if err := cc.__GetSeriesByID(&series, id); err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "Card Series not found",
 		})
@@ -49,7 +59,7 @@ func (cc *CardSeriesController) CreateSeries(c *fiber.Ctx) error {
 	}
 
 	// Save the card to the database
-	if err := database.DB.Create(&series).Error; err != nil {
+	if err := cc.CardSeriesModel.Create(&series).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"error": "Failed to create series",
 		})
@@ -65,7 +75,7 @@ func (cc *CardSeriesController) UpdateSeries(c *fiber.Ctx) error {
 
 	// Find the card series by ID
 	var series models.CardSeriesEntity
-	if err := GetSeriesByID(&series, id); err != nil {
+	if err := cc.__GetSeriesByID(&series, id); err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "Card series not found",
 		})
@@ -77,7 +87,7 @@ func (cc *CardSeriesController) UpdateSeries(c *fiber.Ctx) error {
 	}
 
 	// Update the series in the database
-	if err := database.DB.Save(&series).Error; err != nil {
+	if err := cc.CardSeriesModel.Save(&series).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"error": "Failed to update card",
 		})
@@ -93,7 +103,7 @@ func (cc *CardSeriesController) DeleteSeries(c *fiber.Ctx) error {
 
 	// Find the card series by ID
 	var series models.CardSeriesEntity
-	if err := GetSeriesByID(&series, id); err != nil {
+	if err := cc.__GetSeriesByID(&series, id); err != nil {
 		return c.Status(404).JSON(fiber.Map{
 			"error": "Card not found",
 		})
@@ -101,7 +111,7 @@ func (cc *CardSeriesController) DeleteSeries(c *fiber.Ctx) error {
 	// Delete the card series from the database
 	series.Deleted = true
 	// Set the Deleted field to true instead of deleting the record
-	if err := database.DB.Save(&series).Error; err != nil {
+	if err := cc.CardSeriesModel.Save(&series).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"error": "Failed to delete series",
 		})
@@ -112,9 +122,9 @@ func (cc *CardSeriesController) DeleteSeries(c *fiber.Ctx) error {
 	})
 }
 
-func GetSeriesByID(series *models.CardSeriesEntity, id string) (error) {
+func (cc *CardSeriesController) __GetSeriesByID(series *models.CardSeriesEntity, id string) (error) {
 	// Find the card series by ID
-	if err := database.DB.Where(
+	if err := cc.CardSeriesModel.Where(
 		"deleted = false AND id = ?", id,
 	).First(&series).Error; err != nil {
 		return err
