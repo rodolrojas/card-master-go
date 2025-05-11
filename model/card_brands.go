@@ -21,5 +21,5 @@ type CardBrandEntity struct {
 }
 
 func (cc CardBrandEntity) LoadWithAssociations(db *gorm.DB) *gorm.DB {
-	return db.Preload("CardSeries").Preload("CardSeries.Cards")
+	return db.Preload("CardSeries").Preload("CardSeries.Card")
 }
